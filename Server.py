@@ -5,7 +5,7 @@ import time
 import random
 from typing import Tuple, Optional
 
-github_link = https://github.com/IdanDuha/Communication-System-Hackaton.git
+#github_link = https://github.com/IdanDuha/Communication-System-Hackaton.git
 
 
 class Server:
@@ -183,5 +183,5 @@ class Server:
         self.tcp_socket.close()
 
 if __name__ == "__main__":
-    server = SpeedTestServer()
+    server = Server()
     server.start()
