@@ -7,6 +7,9 @@ from typing import List, Tuple, Dict, Set
 from dataclasses import dataclass
 import sys
 
+
+github_link = https://github.com/IdanDuha/Communication-System-Hackaton.git
+
 @dataclass
 class TransferStats:
     """Statistics for a single transfer"""
