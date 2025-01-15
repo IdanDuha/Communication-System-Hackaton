@@ -5,7 +5,10 @@ import time
 import random
 from typing import Tuple, Optional
 
-class SpeedTestServer:
+github_link = https://github.com/IdanDuha/Communication-System-Hackaton.git
+
+
+class Server:
     """Server implementation for the speed test application"""
     
     MAGIC_COOKIE = 0xabcddcba
