@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import sys
 
 
-github_link = https://github.com/IdanDuha/Communication-System-Hackaton.git
+#github_link = https://github.com/IdanDuha/Communication-System-Hackaton.git
 
 @dataclass
 class TransferStats:
