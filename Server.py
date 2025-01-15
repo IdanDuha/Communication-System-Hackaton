@@ -34,17 +34,35 @@ class Server:
         self.tcp_socket.listen(5)
         
         print(f"Server started, listening on IP address {self.ip_address}")
-
     def _get_local_ip(self) -> str:
         try:
-            # Create a temporary socket to determine local IP
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
-            return ip
-        except Exception:
-            return "127.0.0.1" 
+            # Get all network interfaces
+            hostname = socket.gethostname()
+            ip_addresses = socket.gethostbyname_ex(hostname)[2]
+        
+            # Filter out localhost and try to get the correct network interface
+            for ip in ip_addresses:
+                if not ip.startswith('127.'):  # Skip localhost
+                    return ip
+                
+            # If no suitable IP found, get all network interfaces
+            interfaces = []
+            for if_name in socket.if_nameindex():
+                try:
+                    if_ip = socket.gethostbyname(if_name[1])
+                    if not if_ip.startswith('127.'):
+                        interfaces.append(if_ip)
+                except:
+                    continue
+                
+            if interfaces:
+                return interfaces[0]
+                
+            raise RuntimeError("No suitable network interface found")
+        except Exception as e:
+            print(f"Error getting local IP: {e}")
+            # Instead of returning localhost, raise an error
+            raise RuntimeError("Could not determine local IP address")
 
     def start(self):
         """Start the server's main operations"""
@@ -74,21 +92,25 @@ class Server:
         """Continuously broadcast offer messages"""
         broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        
+    
+        # Bind to the same interface we're listening on
+        broadcast_socket.bind((self.ip_address, 0))
+    
         offer_message = struct.pack('!IbHH',
             self.MAGIC_COOKIE,
             self.MSG_TYPE_OFFER,
             self.udp_port,
             self.tcp_port
         )
-        
+    
         while True:
             try:
-                broadcast_socket.sendto(offer_message, ('<broadcast>', 13117))
+                broadcast_socket.sendto(offer_message, ('255.255.255.255', 13117))
+                print(f"Sent broadcast from {self.ip_address}")
                 time.sleep(1)
             except Exception as e:
                 print(f"Error broadcasting offer: {e}")
-
+                
     def _handle_tcp_client(self, client_socket: socket.socket, address: Tuple[str, int]):
         """Handle individual TCP client connections"""
         try:
