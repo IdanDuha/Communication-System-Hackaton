@@ -14,19 +14,17 @@ class SpeedTestServer:
     MSG_TYPE_PAYLOAD = 0x4
 
     def __init__(self):
-        # Initialize UDP and TCP sockets
+        # Initialize UDP and TCP sockets, bind them to ports
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        # Bind to random available ports
         self.udp_socket.bind(('', 0))
         self.tcp_socket.bind(('', 0))
         
-        # Get the assigned ports
         self.udp_port = self.udp_socket.getsockname()[1]
         self.tcp_port = self.tcp_socket.getsockname()[1]
         
-        # Get local IP address
+       
         self.ip_address = self._get_local_ip()
         
         # Start listening on TCP socket
@@ -35,7 +33,6 @@ class SpeedTestServer:
         print(f"Server started, listening on IP address {self.ip_address}")
 
     def _get_local_ip(self) -> str:
-        """Get the local IP address of the server"""
         try:
             # Create a temporary socket to determine local IP
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -44,7 +41,7 @@ class SpeedTestServer:
             s.close()
             return ip
         except Exception:
-            return "127.0.0.1"  # Fallback to localhost
+            return "127.0.0.1" 
 
     def start(self):
         """Start the server's main operations"""
@@ -64,7 +61,7 @@ class SpeedTestServer:
         udp_handler_thread.start()
         
         try:
-            # Keep the main thread alive
+            # keep the server alive
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
@@ -92,7 +89,6 @@ class SpeedTestServer:
     def _handle_tcp_client(self, client_socket: socket.socket, address: Tuple[str, int]):
         """Handle individual TCP client connections"""
         try:
-            # Receive the requested file size
             data = client_socket.recv(1024).decode()
             if not data.endswith('\n'):
                 raise ValueError("Invalid request format")
@@ -101,7 +97,7 @@ class SpeedTestServer:
             
             # Generate and send random data
             bytes_sent = 0
-            chunk_size = 8192  # 8KB chunks
+            chunk_size = 8*1024  # 8KB chunks
             
             while bytes_sent < file_size:
                 remaining = file_size - bytes_sent
@@ -115,7 +111,7 @@ class SpeedTestServer:
             client_socket.close()
 
     def _accept_tcp_connections(self):
-        """Accept and handle TCP connections"""
+      
         while True:
             try:
                 client_socket, address = self.tcp_socket.accept()
@@ -129,11 +125,10 @@ class SpeedTestServer:
                 print(f"Error accepting TCP connection: {e}")
 
     def _handle_udp_requests(self):
-        """Handle UDP request messages"""
         while True:
             try:
                 data, addr = self.udp_socket.recvfrom(1024)
-                if len(data) < 13:  # Minimum request message size
+                if len(data) < 13:  #min size
                     continue
                 
                 magic_cookie, msg_type, file_size = struct.unpack('!IbQ', data[:13])
@@ -141,7 +136,6 @@ class SpeedTestServer:
                 if magic_cookie != self.MAGIC_COOKIE or msg_type != self.MSG_TYPE_REQUEST:
                     continue
                 
-                # Start a new thread to handle the UDP transfer
                 transfer_thread = threading.Thread(
                     target=self._handle_udp_transfer,
                     args=(addr, file_size)
@@ -177,8 +171,6 @@ class SpeedTestServer:
                 
                 bytes_sent += payload_size
                 current_segment += 1
-                time.sleep(0.001)  # Small delay to prevent overwhelming the network
-                
         except Exception as e:
             print(f"Error handling UDP transfer to {client_addr}: {e}")
 
