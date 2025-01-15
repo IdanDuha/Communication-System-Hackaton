@@ -47,7 +47,8 @@ class SpeedTestClient:
         self.running = True
 
     def start(self):
-        """Start the client's main operation"""
+        """"basicly the main"""
+        
         print("Client started, listening for offer requests...")
         
         while self.running:
@@ -119,11 +120,12 @@ class SpeedTestClient:
         threads: List[threading.Thread] = []
         
         try:
+            counter =1
             # Start TCP transfers
             for i in range(tcp_count):
                 thread = threading.Thread(
                     target=self._handle_tcp_transfer,
-                    args=(i + 1, file_size)
+                    args=(i + counter, file_size)
                 )
                 thread.start()
                 threads.append(thread)
@@ -132,7 +134,7 @@ class SpeedTestClient:
             for i in range(udp_count):
                 thread = threading.Thread(
                     target=self._handle_udp_transfer,
-                    args=(tcp_count + i + 1, file_size)
+                    args=(counter + i+1 , file_size)
                 )
                 thread.start()
                 threads.append(thread)
@@ -186,15 +188,10 @@ class SpeedTestClient:
         """Handle a single UDP transfer"""
         udp_socket = None
         try:
-            # Create socket
             udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             udp_socket.settimeout(1.0)  # 1 second timeout
-            
-            # Initialize statistics
             stats = TransferStats(transfer_id, "UDP", time.time())
-            self.active_transfers[transfer_id] = stats
-            
-            # Send request
+            self.active_transfers[transfer_id] = stats            
             request = struct.pack('!IbQ',
                 self.MAGIC_COOKIE,
                 self.MSG_TYPE_REQUEST,
@@ -228,14 +225,13 @@ class SpeedTestClient:
                         stats.total_packets = total_segments
                     
                 except socket.timeout:
-                    # Check if we should end the transfer (no data for 1 second)
                     if time.time() - last_packet_time > 1.0:
                         break
                 except Exception as e:
                     print(f"Error receiving UDP data in transfer {transfer_id}: {e}")
                     break
                 finally:
-                    pass  # Inner loop resources managed by outer finally
+                    pass  
             
             # Record completion
             stats.end_time = time.time()
